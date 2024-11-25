@@ -1,0 +1,41 @@
+name: headscale
+base: core24
+version: 0.23.0
+license: BSD-3-Clause
+grade: stable
+confinement: strict
+summary: An open source, self-hosted implementation of the Tailscale control server
+description: |
+  See https://headscale.net/ for upstream documentation.
+
+  If any malfunction with Headscale features is observed, where this issue is not observed in Headscale installed from a source other than the snap, please [open an issue](https://github.com/canonical/headscale-snap/issues).
+
+platforms:
+  amd64:
+  arm64:
+  armhf:
+
+apps:
+  headscaled:
+    command: bin/headscale serve
+    daemon: simple
+    plugs:
+      - network
+      - network-bind
+  headscale:
+    command: bin/headscale
+    plugs:
+      - network
+      - network-bind
+
+parts:
+  headscale:
+    source: https://github.com/juanfont/headscale.git
+    source-tag: v$SNAPCRAFT_PROJECT_VERSION
+    plugin: go
+    build-snaps:
+      - go
+    stage-packages:
+      - iptables
+    override-build: |
+      go install -p $CRAFT_PARALLEL_BUILD_COUNT ./cmd/headscale
