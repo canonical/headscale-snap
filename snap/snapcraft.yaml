@@ -17,13 +17,13 @@ platforms:
 
 apps:
   headscaled:
-    command: bin/headscale serve
+    command: bin/headscale -c $SNAP_DATA/config.yaml serve
     daemon: simple
     plugs:
       - network
       - network-bind
   headscale:
-    command: bin/headscale
+    command: bin/headscale -c $SNAP_DATA/config.yaml
     plugs:
       - network
       - network-bind
@@ -36,6 +36,6 @@ parts:
     build-snaps:
       - go
     stage-packages:
-      - iptables
+      - jq # for rendering the config file
     override-build: |
       go install -p $CRAFT_PARALLEL_BUILD_COUNT ./cmd/headscale
