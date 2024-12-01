@@ -36,6 +36,6 @@ parts:
     build-snaps:
       - go
     stage-packages:
-      - jq # for rendering the config file
+      - jq  # for rendering the config file
     override-build: |
       go install -p $CRAFT_PARALLEL_BUILD_COUNT ./cmd/headscale
