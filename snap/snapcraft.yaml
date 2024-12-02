@@ -12,8 +12,6 @@ description: |
 
 platforms:
   amd64:
-  arm64:
-  armhf:
 
 apps:
   headscaled:
