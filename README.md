@@ -1,9 +1,10 @@
 # Headscale snap
 
-This repository contains the snap package sources for [Headscale](https://github.com/juanfont/headscale).
+This repository provides a strictly confined snap package for [Headscale](https://github.com/juanfont/headscale).
 
-## Build the snap
+Please see the listing for [Headscale on the Snap Store](https://snapcraft.io/headscale) for user documentation.
 
+## Local development
 
 You can build the snap locally with:
 
@@ -11,12 +12,12 @@ You can build the snap locally with:
 snapcraft --use-lxd
 ```
 
-## Confinement
+The locally built snap must be installed in dangerous mode (because there are no signatures from the Snap Store):
 
-The snap is strictly confined, and requires the following interfaces:
+```
+sudo snap install --dangerous headscale_*.snap
+```
 
-- [network](https://snapcraft.io/docs/network-interface): general network access.
-- [network-bind](https://snapcraft.io/docs/network-bind-interface): required for listening on a network interface.
 
 ## Usage
 
