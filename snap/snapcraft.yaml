@@ -15,13 +15,13 @@ platforms:
 
 apps:
   headscaled:
-    command: bin/headscale -c $SNAP_DATA/config.yaml serve
+    command: bin/headscale -c $SNAP_COMMON/internal/config.yaml serve
     daemon: simple
     plugs:
       - network
       - network-bind
   headscale:
-    command: bin/headscale -c $SNAP_DATA/config.yaml
+    command: bin/headscale -c $SNAP_COMMON/internal/config.yaml
     plugs:
       - network
       - network-bind
