@@ -51,7 +51,7 @@ description: |
   * `oidc.allowed-groups`: Similar to allowed-domains, but for groups. [default: `[]`]
   * `oidc.allowed-users`: Similar to allowed-domains, but for users. [default: `[]`]
 
-  See https://headscale.net/ref/configuration/ for more information about configuration.
+  See https://headscale.net/stable/ref/configuration/ for more information about configuration.
   Note that the supported snap config options correspond to the similarly named config options in the config.yaml file.
 
   An example of setting options:
