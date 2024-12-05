@@ -3,7 +3,7 @@
 This repository provides a strictly confined snap package for [Headscale](https://github.com/juanfont/headscale).
 
 For user documentation, please see the listing for [Headscale on the Snap Store](https://snapcraft.io/headscale),
-and documents at ./docs/.
+and reference [docs/](./docs/) in this repo.
 
 ## Local development
 
