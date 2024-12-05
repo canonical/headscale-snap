@@ -2,7 +2,8 @@
 
 This repository provides a strictly confined snap package for [Headscale](https://github.com/juanfont/headscale).
 
-Please see the listing for [Headscale on the Snap Store](https://snapcraft.io/headscale) for user documentation.
+For user documentation, please see the listing for [Headscale on the Snap Store](https://snapcraft.io/headscale),
+and documents at ./docs/.
 
 ## Local development
 
@@ -18,16 +19,6 @@ The locally built snap must be installed in dangerous mode (because there are no
 sudo snap install --dangerous headscale_*.snap
 ```
 
-
-## Usage
-
-TODO: expand this
-
-- There is `headscaled`, a snap service which runs `headscale serve`.
-- There is also the `headscale` command, to manage headscale.
-- A config file must be placed in `/var/snap/headscale/current/.headscale/config.yaml`.
-  - TODO: should this be in the snap common dir instead?
-  - Contents must update paths to be in a snap data dir for headscale (most paths are `/var/run/headscale/*` by default).
 
 ## License
 
