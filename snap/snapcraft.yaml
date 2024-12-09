@@ -13,15 +13,18 @@ description: |
 platforms:
   amd64:
 
+environment:
+  HEADSCALE_CONFIG: $SNAP_COMMON/internal/config.yaml
+
 apps:
   headscaled:
-    command: bin/headscale -c $SNAP_COMMON/internal/config.yaml serve
+    command: bin/headscale serve
     daemon: simple
     plugs:
       - network
       - network-bind
   headscale:
-    command: bin/headscale -c $SNAP_COMMON/internal/config.yaml
+    command: bin/headscale
     plugs:
       - network
       - network-bind
