@@ -12,6 +12,7 @@ description: |
 
 platforms:
   amd64:
+  arm64:
 
 environment:
   HEADSCALE_CONFIG: $SNAP_COMMON/internal/config.yaml
