@@ -4,11 +4,31 @@ version: 0.23.0
 license: BSD-3-Clause
 grade: stable
 confinement: strict
+contact: solutions-engineering@lists.canonical.com
+issues: https://github.com/canonical/headscale-snap/issues
 summary: An open source, self-hosted implementation of the Tailscale control server
 description: |
   See https://headscale.net/ for upstream documentation.
 
-  If any malfunction with Headscale features is observed, where this issue is not observed in Headscale installed from a source other than the snap, please [open an issue](https://github.com/canonical/headscale-snap/issues).
+  **Getting started**
+
+  Install the snap:
+
+     sudo snap install headscale
+
+  The snap provides a headscale service (`headscale serve`), with an initial configuration, which is started automatically on install.
+  It also provides the `headscale` command to interact with the service.
+  You will need to configure the service via snap config; see https://github.com/canonical/headscale-snap/blob/main/docs/config-reference.md for more information.
+
+  **Security**
+
+  The snap is strictly confined, and requires the following interfaces:
+
+  * network: general network access.
+  * network-bind: required for listening on a network interface.
+
+  The snap provides some wrappers to manage configuration; these do not directly use any cryptographic functionality.
+  Please see upstream docs for information about security of Headscale itself.
 
 platforms:
   amd64:
