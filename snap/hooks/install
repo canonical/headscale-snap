@@ -1,0 +1,10 @@
+#!/bin/sh -e
+
+# Provide a secure directory for sensitive files.
+mkdir -p "$SNAP_COMMON/internal"
+chmod 700 "$SNAP_COMMON/internal"
+
+# Write out a default configuration for the service if it doesn't already exist.
+if [ ! -e "$SNAP_COMMON/config.yaml" ]; then
+    cp $SNAP/etc/default-config.yaml "$SNAP_COMMON/config.yaml"
+fi
