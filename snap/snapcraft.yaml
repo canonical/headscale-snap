@@ -23,18 +23,8 @@ description: |
 
   **Security**
 
-  The snap is strictly confined, and requires the following interfaces:
-
-  * network: general network access.
-  * network-bind: required for listening on a network interface.
-
-  The configuration provided by default stores all sensitive data under `/var/snap/headscale/common/internal/`,
-  which is only accessible by the root user.
-  However note that you are free to modify the configuration as you wish;
-  care should be taken to audit the configuration in use.
-
-  The snap itself does not directly use any cryptographic functionality.
-  Please see upstream docs for information about security of Headscale itself.
+  See https://github.com/canonical/headscale-snap/blob/main/docs/security-reference.md
+  for security and hardening documentation.
 
 platforms:
   amd64:
