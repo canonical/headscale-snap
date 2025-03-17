@@ -26,6 +26,9 @@ description: |
   See https://github.com/canonical/headscale-snap/blob/main/docs/security-reference.md
   for security and hardening documentation.
 
+  This snap is maintained by Canonical, and is not necessarily endorsed or officially maintained by the upstream developers.
+
+
 platforms:
   amd64:
   arm64:
