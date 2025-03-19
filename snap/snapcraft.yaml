@@ -1,6 +1,6 @@
 name: headscale
 base: core24
-version: 0.24.3
+version: 0.25.1
 license: BSD-3-Clause
 grade: stable
 confinement: strict
