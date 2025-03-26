@@ -7,6 +7,7 @@ confinement: strict
 contact: solutions-engineering@lists.canonical.com
 issues: https://github.com/canonical/headscale-snap/issues
 summary: An open source, self-hosted implementation of the Tailscale control server
+icon: docs/logo.png
 description: |
   See https://headscale.net/ for upstream documentation.
 

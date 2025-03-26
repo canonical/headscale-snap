@@ -26,3 +26,5 @@ This packaging repository is released under the BSD 3-Clause "New" or "Revised" 
 
 Headscale is released under the BSD 3-Clause "New" or "Revised" license.
 Please see the upstream repository for more information: https://github.com/juanfont/headscale
+
+The logo in docs/logo.png is a resized copy of [`headscale3-dots.png` from the upstream Headscale repository](https://github.com/juanfont/headscale/blob/main/docs/logo/headscale3-dots.png).
