@@ -4,8 +4,8 @@
     "config:recommended"
   ],
   "ignorePaths": [
-    ".github/workflows/check.yaml",
-    ".github/workflows/promte.yaml",
+    ".github/workflows/check.yaml",    
+    ".github/workflows/promote.yaml",
     ".github/workflows/release.yaml"
   ],
   "customManagers": [
