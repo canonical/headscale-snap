@@ -3,6 +3,11 @@
   "extends": [
     "config:recommended"
   ],
+  "ignorePaths": [
+    ".github/workflows/check.yaml",
+    ".github/workflows/promte.yaml",
+    ".github/workflows/release.yaml",
+  ],
   "customManagers": [
     {
       "customType": "regex",
