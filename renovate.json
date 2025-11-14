@@ -3,4 +3,18 @@
   "extends": [
     "config:recommended"
   ]
+  "customManagers": [
+    {
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/^snap/snapcraft\\.yaml$/"
+      ],
+      "matchStrings": [
+        "version:\\s*(?<currentValue>\\S+)"
+      ],
+      "datasourceTemplate": "github-releases",
+      "depNameTemplate": "juanfont/headscale",
+      "extractVersionTemplate": "^v?(?<version>.*)$"
+    }
+  ]  
 }
