@@ -54,7 +54,9 @@ prefixes:
   v6: "fd7a:115c:a1e0::/48"
 
   # Strategy used for allocation of IPs to nodes, available options:
-  # - sequential (default): assigns the next free IP from the previous given IP.
+  # - sequential (default): assigns the next free IP from the previous given
+  #   IP. A best-effort approach is used and Headscale might leave holes in the
+  #   IP range or fill up existing holes in the IP range.
   # - random: assigns the next free IP from a pseudo-random IP generator (crypto/rand).
   allocation: sequential
 
@@ -79,6 +81,9 @@ derp:
     region_code: "headscale"
     region_name: "Headscale Embedded DERP"
 
+    # Only allow clients associated with this server access
+    verify_clients: true
+
     # Listens over UDP at the configured address for STUN connections - to help with NAT traversal.
     # When the embedded DERP server is enabled stun_listen_addr MUST be defined.
     #
@@ -96,7 +101,7 @@ derp:
 
     # For better connection stability (especially when using an Exit-Node and DNS is not working),
     # it is possible to optionally add the public IPv4 and IPv6 address to the Derp-Map using:
-    ipv4: 1.2.3.4
+    ipv4: 198.51.100.1
     ipv6: 2001:db8::1
 
   # List of externally available DERP maps encoded in JSON
@@ -119,10 +124,10 @@ derp:
   auto_update_enabled: true
 
   # How often should we check for DERP updates?
-  update_frequency: 24h
+  update_frequency: 3h
 
 # Disables the automatic check for headscale updates on startup
-disable_check_updates: true
+disable_check_updates: false
 
 # Time before an inactive ephemeral node is deleted?
 ephemeral_node_inactivity_timeout: 30m
@@ -204,7 +209,7 @@ tls_letsencrypt_cache_dir: "/var/snap/headscale/common/internal/cache"
 
 # Type of ACME challenge to use, currently supported types:
 # HTTP-01 or TLS-ALPN-01
-# See https://github.com/juanfont/headscale/blob/v0.26.1/docs/ref/tls.md for more information
+# See: docs/ref/tls.md for more information
 tls_letsencrypt_challenge_type: HTTP-01
 # When HTTP-01 challenge is chosen, letsencrypt must set up a
 # verification endpoint, and it will be listening on:
@@ -216,9 +221,11 @@ tls_cert_path: ""
 tls_key_path: ""
 
 log:
+  # Valid log levels: panic, fatal, error, warn, info, debug, trace
+  level: info
+
   # Output formatting for logs: text or json
   format: text
-  level: info
 
 ## Policy
 # headscale supports Tailscale's ACL policies.
@@ -242,17 +249,17 @@ policy:
 # - https://tailscale.com/blog/2021-09-private-dns-with-magicdns/
 #
 # Please note that for the DNS configuration to have any effect,
-# clients must have the '--accept-dns=true' option enabled. This is the
+# clients must have the `--accept-dns=true` option enabled. This is the
 # default for the Tailscale client. This option is enabled by default
 # in the Tailscale client.
 #
-# Setting _any_ of the configuration and '--accept-dns=true' on the
+# Setting _any_ of the configuration and `--accept-dns=true` on the
 # clients will integrate with the DNS manager on the client or
 # overwrite /etc/resolv.conf.
 # https://tailscale.com/kb/1235/resolv-conf
 #
 # If you want stop Headscale from managing the DNS configuration
-# all the fields under 'dns' should be set to empty values.
+# all the fields under `dns` should be set to empty values.
 dns:
   # Whether to use [MagicDNS](https://tailscale.com/kb/1081/magicdns/).
   magic_dns: true
@@ -264,9 +271,9 @@ dns:
   # `hostname.base_domain` (e.g., _myhost.example.com_).
   base_domain: example.com
 
-  # Whether to use the local DNS settings of a node (default) or override the
-  # local DNS settings and force the use of Headscale's DNS configuration.
-  override_local_dns: false
+  # Whether to use the local DNS settings of a node or override the local DNS
+  # settings (default) and force the use of Headscale's DNS configuration.
+  override_local_dns: true
 
   # List of DNS servers to expose to clients.
   nameservers:
@@ -282,8 +289,7 @@ dns:
 
     # Split DNS (see https://tailscale.com/kb/1054/dns/),
     # a map of domains and which DNS server to use for each.
-    split:
-      {}
+    split: {}
       # foo.bar.com:
       #   - 1.1.1.1
       # darp.headscale.net:
@@ -296,7 +302,7 @@ dns:
 
   # Extra DNS records
   # so far only A and AAAA records are supported (on the tailscale side)
-  # See https://github.com/juanfont/headscale/blob/v0.26.1/docs/ref/dns.md for more information
+  # See: docs/ref/dns.md
   extra_records: []
   #   - name: "grafana.myvpn.example.com"
   #     type: "A"
@@ -307,71 +313,87 @@ dns:
   #
   # Alternatively, extra DNS records can be loaded from a JSON file.
   # Headscale processes this file on each change.
-  # extra_records_path: /var/snap/headscale/common/extra-records.json
+  # extra_records_path: /var/lib/headscale/extra-records.json
 
 # Unix socket used for the CLI to connect without authentication
 # Note: for production you will want to set this to something like:
 unix_socket: "/var/snap/headscale/common/internal/headscale.sock"
 unix_socket_permission: "0770"
-#
-# headscale supports experimental OpenID connect support,
-# it is still being tested and might have some bugs, please
-# help us test it.
+
 # OpenID Connect
-oidc:
-  only_start_if_oidc_is_available: true
-  issuer: ""
-  client_id: ""
-  client_secret: ""
-  # Alternatively, set 'client_secret_path' to read the secret from the file.
-  # It resolves environment variables, making integration to systemd's
-  # 'LoadCredential' straightforward:
-  #client_secret_path: "${CREDENTIALS_DIRECTORY}/oidc_client_secret"
-  # client_secret and client_secret_path are mutually exclusive.
-
-  # The amount of time from a node is authenticated with OpenID until it
-  # expires and needs to reauthenticate.
-  # Setting the value to "0" will mean no expiry.
-  expiry: "180d"
-
-  # Use the expiry from the token received from OpenID when the user logged
-  # in, this will typically lead to frequent need to reauthenticate and should
-  # only been enabled if you know what you are doing.
-  # Note: enabling this will cause 'oidc.expiry' to be ignored.
-  use_expiry_from_token: false
-
-  # Customize the scopes used in the OIDC flow, defaults to "openid", "profile" and "email" and add custom query
-  # parameters to the Authorize Endpoint request. Scopes default to "openid", "profile" and "email".
-
-  scope: ["openid","profile","email"]
-  #extra_params:
-  #  domain_hint: example.com
-
-  # List allowed principal domains and/or users. If an authenticated user's domain is not in this list, the
-  # authentication request will be rejected.
-  allowed_domains: []
-  # Note: Groups from keycloak have a leading '/'
-  allowed_groups: []
-  allowed_users: []
-
-  # Optional: PKCE (Proof Key for Code Exchange) configuration
-  # PKCE adds an additional layer of security to the OAuth 2.0 authorization code flow
-  # by preventing authorization code interception attacks
-  # See https://datatracker.ietf.org/doc/html/rfc7636
-  #pkce:
-  #  # Enable or disable PKCE support (default: false)
-  #  enabled: false
-  #  # PKCE method to use:
-  #  # - plain: Use plain code verifier
-  #  # - S256: Use SHA256 hashed code verifier (default, recommended)
-  #  method: S256
+# oidc:
+#   # Block startup until the identity provider is available and healthy.
+#   only_start_if_oidc_is_available: true
+#
+#   # OpenID Connect Issuer URL from the identity provider
+#   issuer: "https://your-oidc.issuer.com/path"
+#
+#   # Client ID from the identity provider
+#   client_id: "your-oidc-client-id"
+#
+#   # Client secret generated by the identity provider
+#   # Note: client_secret and client_secret_path are mutually exclusive.
+#   client_secret: "your-oidc-client-secret"
+#   # Alternatively, set `client_secret_path` to read the secret from the file.
+#   # It resolves environment variables, making integration to systemd's
+#   # `LoadCredential` straightforward:
+#   client_secret_path: "${CREDENTIALS_DIRECTORY}/oidc_client_secret"
+#
+#   # The amount of time a node is authenticated with OpenID until it expires
+#   # and needs to reauthenticate.
+#   # Setting the value to "0" will mean no expiry.
+#   expiry: 180d
+#
+#   # Use the expiry from the token received from OpenID when the user logged
+#   # in. This will typically lead to frequent need to reauthenticate and should
+#   # only be enabled if you know what you are doing.
+#   # Note: enabling this will cause `oidc.expiry` to be ignored.
+#   use_expiry_from_token: false
+#
+#   # The OIDC scopes to use, defaults to "openid", "profile" and "email".
+#   # Custom scopes can be configured as needed, be sure to always include the
+#   # required "openid" scope.
+#   scope: ["openid", "profile", "email"]
+#
+#   # Provide custom key/value pairs which get sent to the identity provider's
+#   # authorization endpoint.
+#   extra_params:
+#     domain_hint: example.com
+#
+#   # Only accept users whose email domain is part of the allowed_domains list.
+#   allowed_domains:
+#     - example.com
+#
+#   # Only accept users whose email address is part of the allowed_users list.
+#   allowed_users:
+#     - alice@example.com
+#
+#   # Only accept users which are members of at least one group in the
+#   # allowed_groups list.
+#   allowed_groups:
+#     - /headscale
+#
+#   # Optional: PKCE (Proof Key for Code Exchange) configuration
+#   # PKCE adds an additional layer of security to the OAuth 2.0 authorization code flow
+#   # by preventing authorization code interception attacks
+#   # See https://datatracker.ietf.org/doc/html/rfc7636
+#   pkce:
+#     # Enable or disable PKCE support (default: false)
+#     enabled: false
+#
+#     # PKCE method to use:
+#     # - plain: Use plain code verifier
+#     # - S256: Use SHA256 hashed code verifier (default, recommended)
+#     method: S256
 
 # Logtail configuration
-# Logtail is Tailscales logging and auditing infrastructure, it allows the control panel
-# to instruct tailscale nodes to log their activity to a remote server.
+# Logtail is Tailscales logging and auditing infrastructure, it allows the
+# control panel to instruct tailscale nodes to log their activity to a remote
+# server. To disable logging on the client side, please refer to:
+# https://tailscale.com/kb/1011/log-mesh-traffic#opting-out-of-client-logging
 logtail:
-  # Enable logtail for this headscales clients.
-  # As there is currently no support for overriding the log server in headscale, this is
+  # Enable logtail for tailscale nodes of this Headscale instance.
+  # As there is currently no support for overriding the log server in Headscale, this is
   # disabled by default. Enabling this will make your clients send logs to Tailscale Inc.
   enabled: false
 
