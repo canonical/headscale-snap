@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Report config-key drift between our snap default-config and upstream headscale.
 
-Compares dotted key paths between ``snap/local/default-config.yaml``and upstream
+Compares dotted key paths between ``snap/local/default-config.yaml`` and upstream
 ``config-example.yaml`` at the git tag matching ``snap/snapcraft.yaml``'s ``version:`` field.
 
 Renders a Markdown report to stdout for a sticky pull-request comment.
