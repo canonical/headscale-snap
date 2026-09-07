@@ -1,0 +1,69 @@
+# Repo-owned workflow (NOT centrally managed). Posts an advisory comment listing
+# config-key drift versus upstream when a PR changes snap/snapcraft.yaml.
+# It will not fail a PR, but only post a comment.
+name: Config drift
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - snap/snapcraft.yaml
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  config-drift:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    # Fork PRs get a read-only token and cannot post comments; skip them cleanly.
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install uv and set up Python 3.12
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+        with:
+          python-version: "3.12"
+
+      - name: Generate config-drift report
+        continue-on-error: true
+        run: |
+          # pyyaml is intentionally unpinned: advisory job, not a build input.
+          uv run --no-project --with pyyaml \
+            python .github/scripts/config_drift.py > drift.md
+          cat drift.md
+
+      - name: Upsert sticky PR comment
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -o pipefail
+          marker='<!-- config-drift-report -->'
+
+          # Guarantee a body so a failed generate step cannot post an empty comment.
+          if [ ! -s drift.md ]; then
+            printf '%s\n\nReport generation failed; see the job log.\n' "$marker" > drift.md
+          fi
+
+          # Find existing sticky comment, if any
+          existing=$(gh api "repos/$REPO/issues/$PR_NUMBER/comments" --paginate \
+            --jq ".[] | select(.user.login == \"github-actions[bot]\" and (.body | startswith(\"$marker\"))) | .id") || {
+            echo "::warning::could not list PR comments; skipping config-drift comment"
+            exit 0
+          }
+          existing=$(printf '%s\n' "$existing" | head -n1)
+
+          if [ -n "$existing" ]; then
+            gh api --method PATCH "repos/$REPO/issues/comments/$existing" -F body=@drift.md
+          else
+            gh api --method POST "repos/$REPO/issues/$PR_NUMBER/comments" -F body=@drift.md
+          fi
