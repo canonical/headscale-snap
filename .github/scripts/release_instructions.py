@@ -13,7 +13,7 @@ import urllib.request
 from pathlib import Path
 
 SNAP = "headscale"
-OWNER = "@canonical/soleng-reviewers"
+OWNER = "@h-m-quang-ngo"
 MARKER = "<!-- release-instructions -->"
 CHANNEL_MAP_URL = f"https://api.snapcraft.io/v2/snaps/info/{SNAP}?fields=channel-map"
 
