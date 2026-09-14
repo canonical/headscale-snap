@@ -29,6 +29,7 @@ jobs:
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0  # The base commit must be present to read its snapcraft.yaml.
+          persist-credentials: false
 
       - name: Generate release instructions
         id: report
