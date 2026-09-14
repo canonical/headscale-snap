@@ -1,0 +1,81 @@
+# Repo-owned workflow (NOT centrally managed). Posts an advisory comment on PRs that change
+# the snap version: whether the matching snap track exists, how to create it, and whether the
+# branch of the line main is leaving needs protecting.
+# It will not fail a PR, but only post a comment.
+name: Release instructions
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [main]
+    paths:
+      - snap/snapcraft.yaml
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  release-instructions:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    # Fork PRs get a read-only token and cannot post comments; skip them cleanly.
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0  # The base commit must be present to read its snapcraft.yaml.
+          persist-credentials: false
+
+      - name: Generate release instructions
+        id: report
+        continue-on-error: true
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          git show "$BASE_SHA:snap/snapcraft.yaml" > "$RUNNER_TEMP/base-snapcraft.yaml"
+          python3 .github/scripts/release_instructions.py \
+            snap/snapcraft.yaml "$RUNNER_TEMP/base-snapcraft.yaml" > report.md
+          cat report.md
+
+      - name: Upsert sticky PR comment
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+          REPORT_OUTCOME: ${{ steps.report.outcome }}
+        run: |
+          set -o pipefail
+          marker='<!-- release-instructions -->'
+
+          # Find existing sticky comment, if any
+          existing=$(gh api "repos/$REPO/issues/$PR_NUMBER/comments" --paginate \
+            --jq ".[] | select(.user.login == \"github-actions[bot]\" and (.body | startswith(\"$marker\"))) | .id") || {
+            echo "::warning::could not list PR comments; skipping release-instructions comment"
+            exit 0
+          }
+          existing=$(printf '%s\n' "$existing" | head -n1)
+
+          # A failed generate step still gets a comment. An empty report means the version
+          # does not change: say nothing, unless an earlier push left instructions that are
+          # now stale.
+          if [ "$REPORT_OUTCOME" != "success" ]; then
+            printf '%s\n\nRelease instructions generation failed; see the job log.\n' "$marker" > report.md
+          elif [ ! -s report.md ]; then
+            if [ -z "$existing" ]; then
+              echo "Version unchanged; no release instructions to post."
+              exit 0
+            fi
+            printf '%s\n\nThis pull request no longer changes the snap version; no release action needed.\n' "$marker" > report.md
+          fi
+
+          if [ -n "$existing" ]; then
+            gh api --method PATCH "repos/$REPO/issues/comments/$existing" -F body=@report.md
+          else
+            gh api --method POST "repos/$REPO/issues/$PR_NUMBER/comments" -F body=@report.md
+          fi
