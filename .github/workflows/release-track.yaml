@@ -27,71 +27,20 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Derive version and track
-        id: derive
-        run: |
-          parsed=$(python3 -c '
-          import sys
-          sys.path.insert(0, ".github/scripts")
-          from release_instructions import parse_version
-          parsed = parse_version(open("snap/snapcraft.yaml", encoding="utf-8").read())
-          if parsed is None:
-              sys.exit("version: in snap/snapcraft.yaml is not X.Y.Z")
-          print(*parsed)
-          ')
-          read -r version track <<< "$parsed"
-          echo "version=$version" >> "$GITHUB_OUTPUT"
-          echo "track=$track" >> "$GITHUB_OUTPUT"
-
       - name: Push branch and tag
         env:
-          VERSION: ${{ steps.derive.outputs.version }}
-          TRACK: ${{ steps.derive.outputs.track }}
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
-        run: |
-          # Token passed per command instead of persisted in .git/config.
-          remote="https://x-access-token:${GH_TOKEN}@github.com/${REPO}.git"
-
-          # Non-force: fast-forwards while main is on this minor, fails loudly otherwise.
-          git push "$remote" "$SHA:refs/heads/$TRACK"
-
-          # Snap-only merges keep the version, so the tag marks the first release of it.
-          if git ls-remote --exit-code --tags "$remote" "refs/tags/$VERSION" > /dev/null; then
-            echo "Tag $VERSION already exists; leaving it in place."
-          else
-            git push "$remote" "$SHA:refs/tags/$VERSION"
-          fi
+        run: python3 -u .github/scripts/release_track.py push
 
       # Store release of the snap to the derived version track, skipped if any earlier step failed.
       - name: Install snapcraft
         run: sudo snap install --classic snapcraft
 
       - name: Release revisions to the version track
-        shell: bash
         env:
           SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.STORE_LOGIN }}
-          VERSION: ${{ steps.derive.outputs.version }}
-          TRACK: ${{ steps.derive.outputs.track }}
-        run: |
-          # Newest revision per arch for this version. `snapcraft revisions` is newest-first,
-          # one arch per row: "Rev. | Uploaded | Arches | Version Channels".
-          revisions=$(snapcraft revisions headscale | awk -v v="$VERSION" '$4 == v && !seen[$3]++ {print $1}')
-          if [ -z "$revisions" ]; then
-            echo "::error::no store revisions found for version $VERSION"
-            exit 1
-          fi
-          for revision in $revisions; do
-            if ! output=$(snapcraft release headscale "$revision" "$TRACK/edge" 2>&1); then
-              echo "$output"
-              if grep -q "Track does not exist" <<< "$output"; then
-                echo "::notice::track $TRACK not created, line not supported; skipping"
-                exit 0
-              fi
-              exit 1
-            fi
-            echo "$output"
-          done
+        run: python3 -u .github/scripts/release_track.py release
 
   notify-on-failure:
     runs-on: ubuntu-latest
