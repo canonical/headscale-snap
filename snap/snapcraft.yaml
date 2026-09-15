@@ -56,7 +56,7 @@ parts:
     source-tag: v$SNAPCRAFT_PROJECT_VERSION
     plugin: go
     build-snaps:
-      - go/1.26/stable
+      - go
     stage-packages:
       - jq  # for rendering the config file
     override-build: |
