@@ -63,13 +63,11 @@ jobs:
             git push "$remote" "$SHA:refs/tags/$VERSION"
           fi
 
-      # Store release of the snap to the derived version track, a failing push must not block it.
+      # Store release of the snap to the derived version track, skipped if any earlier step failed.
       - name: Install snapcraft
-        if: ${{ !cancelled() && steps.derive.outcome == 'success' }}
         run: sudo snap install --classic snapcraft
 
       - name: Release revisions to the version track
-        if: ${{ !cancelled() && steps.derive.outcome == 'success' }}
         shell: bash
         env:
           SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.STORE_LOGIN }}
