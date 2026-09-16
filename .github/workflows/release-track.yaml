@@ -9,6 +9,10 @@ on:
     types: [completed]
     branches: [main]
 
+concurrency:
+  group: release-track
+  cancel-in-progress: false
+
 permissions: {}
 
 jobs:
