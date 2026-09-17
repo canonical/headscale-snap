@@ -1,0 +1,59 @@
+# Repo-owned workflow (NOT centrally managed). After "Publish snap" succeeds on main:
+# 1. create/advance branch X.Y and tag X.Y.Z (if absent), always, before any store step;
+# 2. release the revisions just uploaded to X.Y/edge, skipping cleanly if the track was not created.
+name: Release to version track
+
+on:
+  workflow_run:
+    workflows: ["Publish snap"]
+    types: [completed]
+    branches: [main]
+
+concurrency:
+  group: release-track
+  cancel-in-progress: false
+
+permissions: {}
+
+jobs:
+  release-track:
+    permissions:
+      contents: write
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push'
+    env:
+      SHA: ${{ github.event.workflow_run.head_sha }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Push branch and tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: python3 -u .github/scripts/release_track.py push
+
+      # Store release of the snap to the derived version track, skipped if any earlier step failed.
+      - name: Install snapcraft
+        run: sudo snap install --classic snapcraft
+
+      - name: Release revisions to the version track
+        env:
+          SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.STORE_LOGIN }}
+        run: python3 -u .github/scripts/release_track.py release
+
+  notify-on-failure:
+    runs-on: ubuntu-latest
+    needs: release-track
+    if: ${{ failure() && github.run_attempt == 1 }}
+    steps:
+      - name: Notify release-track failure
+        uses: mattermost/action-mattermost-notify@master
+        with:
+          MATTERMOST_WEBHOOK_URL: ${{ secrets.MATTERMOST_WEBHOOK_URL }}
+          TEXT: |
+            :rotating_light: @soleng release to version track failed in project [${{ github.repository }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
