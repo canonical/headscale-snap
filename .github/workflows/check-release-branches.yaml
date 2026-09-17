@@ -1,0 +1,13 @@
+# Repo-owned workflow (NOT centrally managed).
+# Reuses check.yaml's workflow for PRs into X.Y release branches (backports).
+name: Tests (release branches)
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: ['[0-9]*.[0-9]*']
+
+jobs:
+  check:
+    uses: ./.github/workflows/check.yaml
+    secrets: inherit
