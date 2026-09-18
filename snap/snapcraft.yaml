@@ -1,6 +1,6 @@
 name: headscale
 base: core24
-version: 0.27.1
+version: 0.29.3
 license: BSD-3-Clause
 grade: stable
 confinement: strict
@@ -56,7 +56,7 @@ parts:
     source-tag: v$SNAPCRAFT_PROJECT_VERSION
     plugin: go
     build-snaps:
-      - go/1.26/stable
+      - go
     stage-packages:
       - jq  # for rendering the config file
     override-build: |
