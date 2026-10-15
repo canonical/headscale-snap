@@ -26,7 +26,7 @@ jobs:
     # Fork PRs get a read-only token and cannot post comments; skip them cleanly.
     if: github.event.pull_request.head.repo.full_name == github.repository
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0  # The base commit must be present to read its snapcraft.yaml.
           persist-credentials: false
